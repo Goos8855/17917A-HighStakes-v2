@@ -1,23 +1,23 @@
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/motors.hpp"
+#include "lemlib/chassis/odom.hpp"
 
 //initializing pros stuff
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup left_mg({-11,-12,-13}, pros::MotorGearset::blue);
 pros::MotorGroup right_mg({18,19,20}, pros::MotorGearset::blue);
-pros::MotorGroup intake({1});
-pros::Rotation horizontalSensor(-2); //(0,1.75)
-pros::Rotation verticalSensor(3); //(0,-1.875)
+pros::MotorGroup intake({-1});
+pros::Rotation horizontal_tracking_wheel(-2); //(0,1.75)
+pros::Rotation vertical_tracking_wheel(3); //(0,-1.875)
+pros::Imu imu(10);
 
-//lemlib :^
-lemlib::Drivetrain drivetrain(&left_mg, &right_mg, 12, lemlib::Omniwheel::NEW_275, 360, 2);
-lemlib::TrackingWheel horizontalSensor(&horizontalSensor, lemlib::Omniwheel::NEW_2, 1.75);
-lemlib::TrackingWheel vertical_tracking_wheel(&verticalSensor, lemlib::Omniwheel::NEW_2, 0);
-lemlib::OdomSensors sensors(&verticalSensor, 
-							nullptr,
-							&horizontalSensor,
-							nullptr);
+//lemlib
+lemlib::TrackingWheel horizontal(&horizontal_tracking_wheel, lemlib::Omniwheel::NEW_2, 1.75);
+lemlib::TrackingWheel vertical(&vertical_tracking_wheel, lemlib::Omniwheel::NEW_2, 0);
+lemlib::Drivetrain drivetrain(&left_mg, 
+							  &right_mg, 12, lemlib::Omniwheel::NEW_275, 360, 2);
+
 // lateral PID controller
 lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
                                               0, // integral gain (kI)
@@ -40,6 +40,13 @@ lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               3, // large error range, in degrees
                                               500, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
+);
+
+lemlib::OdomSensors sensors(&vertical, // vertical tracking wheel
+                            nullptr, // vertical tracking wheel 2, set to nullptr as we don't have a second one
+                            &horizontal, // horizontal tracking wheel
+                            nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
+                            &imu // inertial sensor
 );
 
 lemlib::Chassis chassis(drivetrain,
@@ -102,21 +109,11 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+	chassis.turnToHeading(90,4000);
+}
 
-/**
- * Runs the operator control code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the operator
- * control mode.
- *
- * If no competition control is connected, this function will run immediately
- * following initialize().
- *
- * If the robot is disabled or communications is lost, the
- * operator control task will be stopped. Re-enabling the robot will restart the
- * task, not resume it from where it left off.
- */
+
 void opcontrol() {
 
 	//driving controls
@@ -125,27 +122,25 @@ void opcontrol() {
 	chassis.calibrate(); // calibrate sensors
 	// print position to brain screen
 	pros::Task screen_task([&]() {
-		while (true) {
-			// print robot location to the brain screen
-			pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-			pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-			pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-			// delay to save resources
-			pros::delay(20);
-		}
+
 	});
 
 	while (true) {
 		
-		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
-		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
-		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);  // Prints status of the emulated screen LCDs
+		pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
+		pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
+		pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+		// delay to save resources
+		pros::delay(20);
 
 		// Arcade control scheme
 		int dir = master.get_analog(ANALOG_LEFT_Y);    // Gets amount forward/backward from left joystick
 		int turn = -1*master.get_analog(ANALOG_LEFT_X);  // Gets the turn left/right from right joystick
 		left_mg.move(dir - turn);                      // Sets left motor voltage
 		right_mg.move(dir + turn);                     // Sets right motor voltage
+
+		intake.move(master.get_analog(ANALOG_RIGHT_Y)); // Sets intake voltage
+
 		pros::delay(20);                               // Run for 20 ms then update
 	}
 
