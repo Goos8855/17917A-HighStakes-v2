@@ -124,11 +124,10 @@ void competition_initialize() {}
  * from where it left off.
  */
 
-ASSET(example_txt);
-ASSET(testpath_txt);
-ASSET(testpath2_txt);
+ASSET(path_txt);
+
 void autonomous() {
-	chassis.follow(testpath2_txt, 6, 10000);
+	chassis.follow(path_txt, 4, 10000);
 }
 
 
