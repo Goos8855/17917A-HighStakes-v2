@@ -10,6 +10,8 @@
 //variables
 bool mogoToggle = false;
 
+ASSET(path_txt); //path file goes here
+
 //initializing pros stuff
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup left_mg({-11,-12,-13}, pros::MotorGearset::blue);
@@ -63,20 +65,17 @@ lemlib::Chassis chassis(drivetrain,
 						angular_controller,
 						sensors
 );
-/**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
 
-/**
- * Runs initialization code. This occurs as soon as the program is started.
- *
- * All other competition modes are blocked by initialize; it is recommended
- * to keep execution time for this mode under a few seconds.
- */
-
+void clearlcd(){ //clears lcd (duh)
+    pros::lcd::clear_line(0);
+    pros::lcd::clear_line(1);
+    pros::lcd::clear_line(2);
+    pros::lcd::clear_line(3);
+    pros::lcd::clear_line(4);
+    pros::lcd::clear_line(5);
+    pros::lcd::clear_line(6);
+    pros::lcd::clear_line(7);
+}
 
 void initialize() {
     pros::lcd::initialize();
@@ -88,51 +87,33 @@ void initialize() {
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-            // delay to save resources
-            pros::delay(20);
+            pros::delay(20); //dont remove this
         }
     });
 }
 
-/**
- * Runs while the robot is in the disabled state of Field Management System or
- * the VEX Competition Switch, following either autonomous or opcontrol. When
- * the robot is enabled, this task will exit.
- */
-void disabled() {}
+void disabled() {
+    clearlcd();
+    pros::lcd::print(5, "Disabled :(");
+}
 
-/**
- * Runs after initialize(), and before autonomous when connected to the Field
- * Management System or the VEX Competition Switch. This is intended for
- * competition-specific initialization routines, such as an autonomous selector
- * on the LCD.
- *
- * This task will exit when the robot is enabled and autonomous or opcontrol
- * starts.
- */
 void competition_initialize() {}
 
-/**
- * Runs the user autonomous code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the autonomous
- * mode. Alternatively, this function may be called in initialize or opcontrol
- * for non-competition testing purposes.
- *
- * If the robot is disabled or communications is lost, the autonomous task
- * will be stopped. Re-enabling the robot will restart the task, not re-start it
- * from where it left off.
- */
-
-ASSET(path_txt);
-
 void autonomous() {
-	chassis.follow(path_txt, 6, 10000);
+    clearlcd();
+    pros::lcd::print(5, "Running auton...");
+	chassis.moveToPoint(0,60,3000);
+    chassis.moveToPoint(-30,0,3000);
+    chassis.moveToPoint(0,60,3000);
 }
 
 
 void opcontrol() {
-	//driving controls
+	
+    clearlcd();
+    pros::lcd::print(5, "Driver Control");
+    pros::lcd::print(6, "vroom vroom");
+
     while (true) {
         // get left y and right x positions
         int leftY = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
@@ -141,8 +122,7 @@ void opcontrol() {
         // move the robot
         chassis.arcade(leftY, leftX);
 
-        // delay to save resources
-        pros::delay(25);
+        pros::delay(25); //dont remove this
         intake.move(master.get_analog(ANALOG_RIGHT_Y));
 
         if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)){
@@ -154,5 +134,9 @@ void opcontrol() {
         mogo.set_value(mogoToggle);
         lv_task_handler();
 	//intake controls
+    }
+
+    if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){
+        chassis.follow(path_txt, 1, 10000);
     }
 }
