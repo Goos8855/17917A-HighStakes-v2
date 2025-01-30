@@ -127,7 +127,7 @@ void competition_initialize() {}
 ASSET(path_txt);
 
 void autonomous() {
-	chassis.follow(path_txt, 4, 10000);
+	chassis.follow(path_txt, 6, 10000);
 }
 
 
