@@ -2,7 +2,11 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/motors.hpp"
 #include "lemlib/chassis/odom.hpp"
-
+#include <vector>
+#include <cmath>
+#include "liblvgl/lvgl.h"
+#include "liblvgl/lv_api_map.h"
+#include "liblvgl/draw/lv_draw.h"
 //variables
 bool mogoToggle = false;
 
@@ -65,15 +69,6 @@ lemlib::Chassis chassis(drivetrain,
  * When this callback is fired, it will toggle line 2 of the LCD text between
  * "I was pressed!" and nothing.
  */
-void on_center_button() {
-	static bool pressed = false;
-	pressed = !pressed;
-	if (pressed) {
-		pros::lcd::set_text(2, "I was pressed!");
-	} else {
-		pros::lcd::clear_line(2);
-	}
-}
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -81,8 +76,10 @@ void on_center_button() {
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
+
+
 void initialize() {
-	pros::lcd::initialize(); // initialize brain screen
+    pros::lcd::initialize();
     chassis.calibrate(); // calibrate sensors
     // print position to brain screen
     pros::Task screen_task([&]() {
@@ -126,17 +123,17 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
+
+ASSET(example_txt);
+ASSET(testpath_txt);
+ASSET(testpath2_txt);
 void autonomous() {
-	pros::lcd::set_text(5, "Running autonomous");
-	chassis.moveToPoint(10, 1, 0);
+	chassis.follow(testpath2_txt, 6, 10000);
 }
 
 
 void opcontrol() {
-
 	//driving controls
-
-
     while (true) {
         // get left y and right x positions
         int leftY = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
@@ -155,8 +152,8 @@ void opcontrol() {
         if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)){
             //dunno what to put here yet
         }
-
         mogo.set_value(mogoToggle);
+        lv_task_handler();
 	//intake controls
     }
 }
