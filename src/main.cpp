@@ -10,7 +10,7 @@
 //variables
 bool mogoToggle = false;
 
-ASSET(path_txt); //path file goes here
+ASSET(example_txt); //path file goes here
 
 //initializing pros stuff
 pros::Controller master(pros::E_CONTROLLER_MASTER);
@@ -102,11 +102,8 @@ void competition_initialize() {}
 void autonomous() {
     clearlcd();
     pros::lcd::print(5, "Running auton...");
-	chassis.moveToPoint(0,60,3000);
-    chassis.moveToPoint(-30,0,3000);
-    chassis.moveToPoint(0,60,3000);
+	chassis.follow(example_txt, 15, 2000);
 }
-
 
 void opcontrol() {
 	
@@ -134,9 +131,5 @@ void opcontrol() {
         mogo.set_value(mogoToggle);
         lv_task_handler();
 	//intake controls
-    }
-
-    if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){
-        chassis.follow(path_txt, 1, 10000);
     }
 }
