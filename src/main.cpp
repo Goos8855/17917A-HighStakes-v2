@@ -17,6 +17,7 @@ pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup left_mg({-11,-12,-13}, pros::MotorGearset::blue);
 pros::MotorGroup right_mg({18,19,20}, pros::MotorGearset::blue);
 pros::MotorGroup intake({-1});
+pros::MotorGroup brown({5});
 pros::Rotation horizontal_tracking_wheel(-2); //(0,1.75)
 pros::Rotation vertical_tracking_wheel(3); //(0,-1.875)
 pros::Imu imu(10);
@@ -30,15 +31,15 @@ lemlib::Drivetrain drivetrain(&left_mg,
 							  &right_mg, 12, lemlib::Omniwheel::NEW_275, 360, 2);
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
-                                              0, // integral gain (kI)
-                                              3, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+lemlib::ControllerSettings lateral_controller(10,     // proportional gain (kP)
+                                              0,      // integral gain (kI)
+                                              3,      // derivative gain (kD)
+                                              3,      // anti windup
+                                              1,      // small error range, in inches
+                                              100,    // small error range timeout, in milliseconds
+                                              3,      // large error range, in inches
+                                              500,    // large error range timeout, in milliseconds
+                                              20      // maximum acceleration (slew)
 );
 
 // angular PID controller
@@ -102,7 +103,11 @@ void competition_initialize() {}
 void autonomous() {
     clearlcd();
     pros::lcd::print(5, "Running auton...");
-	chassis.follow(example_txt, 15, 2000);
+	chassis.moveToPoint(0, 0, 5000);
+    chassis.moveToPoint(-31.025, 0.131, 5000);
+    chassis.moveToPoint(-34.821, 23.825, 5000);
+    chassis.moveToPoint(-52.101, 19.898, 5000);
+
 }
 
 void opcontrol() {
@@ -110,11 +115,12 @@ void opcontrol() {
     clearlcd();
     pros::lcd::print(5, "Driver Control");
     pros::lcd::print(6, "vroom vroom");
+    float sens = 1.5;
 
     while (true) {
         // get left y and right x positions
-        int leftY = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int leftX = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
+        int leftY = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)*sens;
+        int leftX = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)*sens;
 
         // move the robot
         chassis.arcade(leftY, leftX);
@@ -125,9 +131,8 @@ void opcontrol() {
         if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)){
             mogoToggle = !mogoToggle;
         }
-        if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)){
-            //dunno what to put here yet
-        }
+
+
         mogo.set_value(mogoToggle);
         lv_task_handler();
 	//intake controls
