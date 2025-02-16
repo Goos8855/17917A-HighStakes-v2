@@ -16,7 +16,7 @@ ASSET(example_txt); //path file goes here
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup left_mg({-11,-12,-13}, pros::MotorGearset::blue);
 pros::MotorGroup right_mg({18,19,20}, pros::MotorGearset::blue);
-pros::MotorGroup intake({-1});
+pros::MotorGroup intake({1,-4});
 pros::MotorGroup brown({5});
 pros::Rotation horizontal_tracking_wheel(-2); //(0,1.75)
 pros::Rotation vertical_tracking_wheel(3); //(0,-1.875)
@@ -116,6 +116,9 @@ void opcontrol() {
     pros::lcd::print(5, "Driver Control");
     pros::lcd::print(6, "vroom vroom");
     float sens = 1.5;
+    int brownPos =75;
+    int count = 0;
+    bool locked = false;
 
     while (true) {
         // get left y and right x positions
@@ -123,7 +126,7 @@ void opcontrol() {
         int leftX = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)*sens;
 
         // move the robot
-        chassis.arcade(leftY, leftX);
+        chassis.curvature(leftY, leftX);
 
         pros::delay(25); //dont remove this
         intake.move(master.get_analog(ANALOG_RIGHT_Y));
@@ -131,10 +134,38 @@ void opcontrol() {
         if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)){
             mogoToggle = !mogoToggle;
         }
+        if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)){
+            intake.move(127);
+            pros::delay(75);
+            intake.move(0);
+        }
 
+       if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
+            brownPos = 1700;
+        } else{
+            brownPos = 75;
+        }
 
+        if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)){
+            locked = !locked;
+        }
+
+        if(locked){
+            brownPos = 400;
+        }
+
+        if(count<=10){
+            count++;    
+            if(locked){
+                master.set_text(0, 0, "Locked");
+            } else{
+                master.set_text(0, 0, "Unlocked");
+            }
+        } else{
+            count = 0;
+        }
+
+       brown.move_absolute(brownPos, 200);
         mogo.set_value(mogoToggle);
-        lv_task_handler();
-	//intake controls
     }
 }
