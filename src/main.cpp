@@ -7,6 +7,7 @@
 #include "liblvgl/lvgl.h"
 #include "liblvgl/lv_api_map.h"
 #include "liblvgl/draw/lv_draw.h"
+#include "pros/rtos.hpp"
 //variables
 bool mogoToggle = false;
 
@@ -103,10 +104,32 @@ void competition_initialize() {}
 void autonomous() {
     clearlcd();
     pros::lcd::print(5, "Running auton...");
-	chassis.moveToPoint(0, 0, 5000);
-    chassis.moveToPoint(-31.025, 0.131, 5000);
-    chassis.moveToPoint(-34.821, 23.825, 5000);
-    chassis.moveToPoint(-52.101, 19.898, 5000);
+    mogo.set_value(true);
+    brown.move_absolute((400), 200);
+    chassis.moveToPoint(0, 14, 2000);
+    chassis.turnToHeading(90, 1000);
+    chassis.moveToPoint(-30, 12, 2000,{.forwards=false,.maxSpeed=60});
+    pros::delay(750);
+    mogo.set_value(false);
+    chassis.turnToHeading(-11, 1000);
+    intake.move((-127));
+    pros::delay(2000);
+    chassis.moveToPoint(-43, 87, 3000,{.maxSpeed=100});
+    pros::delay((2500));
+    chassis.moveToPoint(-43, 65, 1500,{.maxSpeed=60});
+    chassis.turnToHeading(-90, 1000);
+    pros::delay(1000);
+    brown.move_absolute(75, 200);
+    chassis.moveToPose(-64, 61, -90,5000,{.maxSpeed=10});
+    pros::delay(3500);
+    intake.move(127);
+    pros::delay(75);
+    intake.move(0);
+    brown.move_absolute(1550, 200);
+    pros::delay(2500);
+    chassis.moveToPoint(-43, 76, 1500,{.forwards=false});
+
+    
 
 }
 
